@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shuttle Driver Decision Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        
+        .header-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .header-card {
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .header-card.blue {
+            background: #dbeafe;
+        }
+        
+        .header-card.red {
+            background: #fee2e2;
+        }
+        
+        .header-card .label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        
+        .header-card .name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header-card.blue .name {
+            color: #1e40af;
+        }
+        
+        .header-card.red .name {
+            color: #991b1b;
+        }
+        
+        .header-card .amount {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .header-card.blue .amount {
+            color: #1e3a8a;
+        }
+        
+        .header-card.red .amount {
+            color: #7f1d1d;
+        }
+        
+        .tabs {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            background: #f9fafb;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 18px 30px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn:hover {
+            background: #f3f4f6;
+        }
+        
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+            background: white;
+        }
+        
+        .tab-content {
+            padding: 40px;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid;
+        }
+        
+        .metric-card.red {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+        
+        .metric-card.blue {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+        
+        .metric-card.purple {
+            background: #faf5ff;
+            border-color: #d8b4fe;
+        }
+        
+        .metric-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 10px 0;
+        }
+        
+        .metric-card .label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .metric-card .sublabel {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 10px;
+        }
+        
+        .alert-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .alert-box h4 {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .alert-box ul {
+            margin-left: 20px;
+        }
+        
+        .alert-box li {
+            margin: 8px 0;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .comparison-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .comparison-card h4 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .comparison-card.blue h4 {
+            color: #1d4ed8;
+        }
+        
+        .comparison-card.red h4 {
+            color: #dc2626;
+        }
+        
+        .comparison-card ul {
+            list-style: none;
+        }
+        
+        .comparison-card li {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin: 25px 0;
+        }
+        
+        .chart-container h4 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+        
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .risk-card {
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid;
+        }
+        
+        .risk-card.risks {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+        
+        .risk-card.benefits {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+        
+        .risk-card h4 {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .risk-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .risk-item .title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .risk-item.high .title {
+            color: #dc2626;
+        }
+        
+        .risk-item.medium .title {
+            color: #f97316;
+        }
+        
+        .risk-item.low .title {
+            color: #16a34a;
+        }
+        
+        .risk-item .desc {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        thead {
+            background: #f3f4f6;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .badge.high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge.medium {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+        
+        .badge.low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .recommendation-box {
+            background: linear-gradient(135deg, #d1fae5 0%, #dbeafe 100%);
+            padding: 40px;
+            border-radius: 12px;
+            border: 2px solid #10b981;
+            margin: 30px 0;
+        }
+        
+        .recommendation-box h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #065f46;
+        }
+        
+        .recommendation-box .decision {
+            font-size: 20px;
+            font-weight: bold;
+            color: #047857;
+            margin-bottom: 20px;
+        }
+        
+        .rationale {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .rationale h4 {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .rationale ol {
+            margin-left: 25px;
+        }
+        
+        .rationale li {
+            margin: 10px 0;
+            color: #374151;
+        }
+        
+        .implementation {
+            display: grid;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .phase {
+            padding: 20px;
+            border-left: 4px solid;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .phase.blue {
+            border-color: #3b82f6;
+        }
+        
+        .phase.purple {
+            border-color: #8b5cf6;
+        }
+        
+        .phase.green {
+            border-color: #10b981;
+        }
+        
+        .phase h5 {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .phase p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .success-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .success-card {
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid;
+        }
+        
+        .success-card.blue {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+        
+        .success-card.purple {
+            background: #faf5ff;
+            border-color: #d8b4fe;
+        }
+        
+        .success-card.green {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+        
+        .success-card h5 {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .success-card ul {
+            list-style: none;
+        }
+        
+        .success-card li {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        @media print {
+            .tab-buttons {
+                display: none;
+            }
+            .tab-panel {
+                display: block !important;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Shuttle Driver Decision Analysis</h1>
+            <p class="subtitle">Japanese-Style Decision Making Framework</p>
+            <p style="color: #6b7280;">Date: February 5, 2026</p>
+            
+            <div class="header-cards">
+                <div class="header-card blue">
+                    <div class="label">Current Driver</div>
+                    <div class="name">OCBA, Rolando</div>
+                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">MG Exeo Network</div>
+                    <div class="amount">₱45,003</div>
+                </div>
+                <div class="header-card red">
+                    <div class="label">Rental Driver</div>
+                    <div class="name">PIMENTEL, Reggie</div>
+                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">CRR Service Corp</div>
+                    <div class="amount">₱49,667</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="showTab('summary')">📋 Executive Summary</button>
+                <button class="tab-btn" onclick="showTab('financial')">💰 Financial Analysis</button>
+                <button class="tab-btn" onclick="showTab('risk')">⚠️ Risk Analysis</button>
+                <button class="tab-btn" onclick="showTab('recommendation')">✅ Recommendation</button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Executive Summary Tab -->
+                <div id="summary" class="tab-panel active">
+                    <div style="background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #3b82f6; margin-bottom: 30px;">
+                        <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 15px;">Decision Proposal (Ringi-sho)</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px;">
+                            <div><strong>Proposer:</strong> Operations Department</div>
+                            <div><strong>Date:</strong> February 5, 2026</div>
+                            <div><strong>Subject:</strong> Shuttle Driver Cost Optimization</div>
+                            <div><strong>Departments:</strong> HR, Finance, Operations</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-card red">
+                            <div class="label">Cost Difference</div>
+                            <div class="value">₱4,664</div>
+                            <div class="label">Additional Cost</div>
+                            <div class="sublabel">+10.4%</div>
+                        </div>
+                        
+                        <div class="metric-card blue">
+                            <div class="label">Average OT per Period</div>
+                            <div class="value">49.3 hrs</div>
+                            <div class="label">Current Driver</div>
+                            <div class="sublabel">Rental: 50.2 hrs</div>
+                        </div>
+                        
+                        <div class="metric-card purple">
+                            <div class="label">December OT Total</div>
+                            <div class="value">114.5 hrs</div>
+                            <div class="label">Current Driver</div>
+                            <div class="sublabel" style="color: #dc2626;">⚠ Over limit</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-box">
+                        <h4>Current Issues</h4>
+                        <ul>
+                            <li><strong>OT Cap Violation:</strong> Dec period shows 114.5 hrs - exceeds legal limits</li>
+                            <li><strong>Labor Code Risk:</strong> Article 85 flagged by ICC</li>
+                            <li><strong>Employee Fatigue:</strong> Safety concerns from excessive OT</li>
+                            <li><strong>No Backup:</strong> Service disruption risk if driver unavailable</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: white; padding: 25px; border-radius: 12px; border: 2px solid #e5e7eb;">
+                        <h4 style="font-weight: bold; font-size: 16px; margin-bottom: 20px;">Proposal Summary</h4>
+                        <div class="comparison-grid">
+                            <div class="comparison-card blue">
+                                <h4>Option A: Keep Current</h4>
+                                <p style="margin-bottom: 15px; font-weight: 600;">Total: ₱45,003</p>
+                                <ul>
+                                    <li>✓ Lower cost</li>
+                                    <li>✓ Familiar driver</li>
+                                    <li>✗ OT violations</li>
+                                    <li>✗ Legal risks</li>
+                                    <li>✗ No backup</li>
+                                </ul>
+                            </div>
+                            <div class="comparison-card red">
+                                <h4>Option B: Switch to Rental</h4>
+                                <p style="margin-bottom: 15px; font-weight: 600;">Total: ₱49,667</p>
+                                <ul>
+                                    <li>✓ Full compliance</li>
+                                    <li>✓ Backup driver</li>
+                                    <li>✓ No HR admin</li>
+                                    <li>✗ Higher cost (+₱4,664)</li>
+                                    <li>✗ Transition needed</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financial Analysis Tab -->
+                <div id="financial" class="tab-panel">
+                    <div class="chart-container">
+                        <h4>💰 Cost Comparison by Period (₱)</h4>
+                        <canvas id="costChart"></canvas>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px;">
+                        <div class="chart-container">
+                            <h4>📊 Total Cost Breakdown</h4>
+                            <canvas id="pieChart"></canvas>
+                            <p style="text-align: center; margin-top: 15px; font-weight: 600; color: #dc2626;">Difference: +₱4,664 (10.4%)</p>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h4>🔍 Rental Cost Distribution</h4>
+                            <canvas id="rentalPieChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>⏰ Overtime Hours by Period</h4>
+                        <canvas id="otChart"></canvas>
+                        <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid #fca5a5;">
+                            <p style="color: #991b1b; font-size: 14px;">
+                                <strong>⚠ Critical:</strong> Dec period total = 114.5 OT hours (exceeds typical 72-96 hr monthly cap)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Risk Analysis Tab -->
+                <div id="risk" class="tab-panel">
+                    <div class="risk-grid">
+                        <div class="risk-card risks">
+                            <h4>⚠️ Risks - Current Driver</h4>
+                            <div class="risk-item high">
+                                <div class="title">🔴 HIGH - Legal Compliance</div>
+                                <div class="desc">OT violations = DOLE penalties exposure</div>
+                            </div>
+                            <div class="risk-item high">
+                                <div class="title">🔴 HIGH - Safety Risk</div>
+                                <div class="desc">Driver fatigue increases accident probability</div>
+                            </div>
+                            <div class="risk-item medium">
+                                <div class="title">🟠 MEDIUM - No Backup</div>
+                                <div class="desc">Service stops if driver unavailable</div>
+                            </div>
+                        </div>
+                        
+                        <div class="risk-card benefits">
+                            <h4>✅ Benefits - Rental Driver</h4>
+                            <div class="risk-item low">
+                                <div class="title">✓ Compliance Built-in</div>
+                                <div class="desc">CRR handles all benefits & compliance</div>
+                            </div>
+                            <div class="risk-item low">
+                                <div class="title">✓ Backup Coverage</div>
+                                <div class="desc">Replacement driver provided</div>
+                            </div>
+                            <div class="risk-item low">
+                                <div class="title">✓ Zero HR Admin</div>
+                                <div class="desc">No payroll or benefits management</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>📋 Risk Assessment Matrix</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Risk Category</th>
+                                    <th style="text-align: center;">Current Driver</th>
+                                    <th style="text-align: center;">Rental Driver</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Legal Compliance</strong></td>
+                                    <td style="text-align: center;"><span class="badge high">HIGH</span></td>
+                                    <td style="text-align: center;"><span class="badge low">LOW</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Safety / Fatigue</strong></td>
+                                    <td style="text-align: center;"><span class="badge high">HIGH</span></td>
+                                    <td style="text-align: center;"><span class="badge low">LOW</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Service Continuity</strong></td>
+                                    <td style="text-align: center;"><span class="badge medium">MEDIUM</span></td>
+                                    <td style="text-align: center;"><span class="badge low">LOW</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Cost Predictability</strong></td>
+                                    <td style="text-align: center;"><span class="badge medium">MEDIUM</span></td>
+                                    <td style="text-align: center;"><span class="badge low">LOW</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert-box">
+                        <h4>💡 Hidden Cost Analysis</h4>
+                        <p style="margin-bottom: 15px;">Rental costs ₱4,664 more, but hidden costs of current setup may be higher:</p>
+                        <ul>
+                            <li><strong>DOLE penalties:</strong> ₱10,000-50,000 per violation</li>
+                            <li><strong>Accident liability:</strong> Potentially millions in pesos</li>
+                            <li><strong>HR admin time:</strong> ~20 hrs/month (opportunity cost ~₱15,000/yr)</li>
+                            <li><strong>Service disruption:</strong> Lost productivity if no backup</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Recommendation Tab -->
+                <div id="recommendation" class="tab-panel">
+                    <div class="recommendation-box">
+                        <h3>Final Recommendation</h3>
+                        <div class="decision">✅ Switch to Rental Driver (CRR Service Corporation)</div>
+                        <p style="margin-bottom: 20px; color: #374151;">
+                            Despite <strong>₱4,664 (~10.4%) cost increase</strong>, rental option provides superior risk management, 
+                            compliance assurance, and operational flexibility.
+                        </p>
+                        <div class="rationale">
+                            <h4>Decision Rationale:</h4>
+                            <ol>
+                                <li><strong>Compliance First:</strong> ICC flagged OT violations - legal risk exceeds cost savings</li>
+                                <li><strong>Safety Priority:</strong> 114.5 hrs OT creates unacceptable liability exposure</li>
+                                <li><strong>Business Continuity:</strong> Backup driver availability prevents service disruption</li>
+                                <li><strong>Long-term Efficiency:</strong> Zero HR admin burden frees team for strategic work</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; padding: 30px; border-radius: 12px; border: 2px solid #3b82f6;">
+                        <h4 style="font-weight: bold; font-size: 18px; margin-bottom: 20px;">Implementation Plan</h4>
+                        <div class="implementation">
+                            <div class="phase blue">
+                                <h5>Phase 1: Contract (Week 1-2)</h5>
+                                <p>Get quotes, negotiate SLA, legal review, final approvals</p>
+                            </div>
+                            <div class="phase purple">
+                                <h5>Phase 2: Transition (Week 3-4)</h5>
+                                <p>2-week overlap: new driver shadows current, route training, documentation</p>
+                            </div>
+                            <div class="phase green">
+                                <h5>Phase 3: Go-Live (Week 5-8)</h5>
+                                <p>Start service, daily check-ins, employee feedback survey, monthly reviews</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="success-grid">
+                        <div class="success-card blue">
+                            <h5>📊 Success Metrics</h5>
+                            <ul>
+                                <li>• Zero OT violations</li>
+                                <li>• 100% on-time performance</li>
+                                <li>• 85%+ employee satisfaction</li>
+                                <li>• No compliance issues</li>
+                            </ul>
+                        </div>
+                        <div class="success-card purple">
+                            <h5>⚠️ Risk Mitigation</h5>
+                            <ul>
+                                <li>• 3-month trial period</li>
+                                <li>• Backup SLA under 2 hours</li>
+                                <li>• Monthly performance reviews</li>
+                                <li>• Route documentation backup</li>
+                            </ul>
+                        </div>
+                        <div class="success-card green">
+                            <h5>💰 Budget Impact</h5>
+                            <ul>
+                                <li>• +₱18,656 per year</li>
+                                <li>• Penalty avoidance: ₱50,000</li>
+                                <li>• HR time saved: ₱15,000</li>
+                                <li>• <strong>Net: ~₱3,656/yr</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            const panels = document.querySelectorAll('.tab-panel');
+            const buttons = document.querySelectorAll('.tab-btn');
+            
+            panels.forEach(panel => panel.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Chart data
+        const periodLabels = ['Period 1\nNov 11-Dec 05', 'Period 2\nDec 06-20', 'Period 3\nDec 21-Jan 05'];
+        
+        // Cost Comparison Bar Chart
+        const costCtx = document.getElementById('costChart').getContext('2d');
+        new Chart(costCtx, {
+            type: 'bar',
+            data: {
+                labels: periodLabels,
+                datasets: [
+                    {
+                        label: 'Current Driver',
+                        data: [15692.57, 16076.71, 13234.24],
+                        backgroundColor: '#3b82f6'
+                    },
+                    {
+                        label: 'Rental Driver',
+                        data: [17568.35, 17676.50, 14422.24],
+                        backgroundColor: '#ef4444'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Total Cost Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Current Driver', 'Rental Driver'],
+                datasets: [{
+                    data: [45003.52, 49667.09],
+                    backgroundColor: ['#3b82f6', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ₱' + context.parsed.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Rental Breakdown Pie Chart
+        const rentalPieCtx = document.getElementById('rentalPieChart').getContext('2d');
+        new Chart(rentalPieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Basic Pay', 'OT Amount', '13th Month', 'Retirement', 'Gov Benefits', 'Admin Fee'],
+                datasets: [{
+                    data: [21545, 16343.36, 1795.42, 1954.68, 3294.88, 4733.75],
+                    backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ₱' + context.parsed.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // OT Hours Line Chart
+        const otCtx = document.getElementById('otChart').getContext('2d');
+        new Chart(otCtx, {
+            type: 'line',
+            data: {
+                labels: periodLabels,
+                datasets: [
+                    {
+                        label: 'Current Driver OT',
+                        data: [55.5, 59, 33.5],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        borderWidth: 3
+                    },
+                    {
+                        label: 'Rental Driver OT',
+                        data: [71, 34.5, 45],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        borderWidth: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: true }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'OT Hours'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
